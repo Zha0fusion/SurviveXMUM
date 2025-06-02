@@ -1,74 +1,33 @@
 # SurviveXMUM
-厦门大学马来西亚分校自救指南
 
-## 简介
-欢迎来到厦门大学马来西亚分校自救指南！本项目旨在为厦大马校的同学们提供一个全面的信息共享平台，帮助大家更好地适应和享受在马校的学习与生活。
+This template should help get you started developing with Vue 3 in Vite.
 
-## 目录
-<!-- 在这里添加您的目录，例如： -->
-- [SurviveXMUM](#survivexmum)
-  - [简介](#简介)
-  - [目录](#目录)
-  - [如何使用本指南](#如何使用本指南)
-  - [指南内容](#指南内容)
-    - [行前准备](#行前准备)
-    - [校园生活](#校园生活)
-    - [学业指南](#学业指南)
-    - [校外探索](#校外探索)
-    - [实用信息](#实用信息)
-  - [如何贡献](#如何贡献)
-  - [许可证](#许可证)
-  - [未来计划](#未来计划)
+## Recommended IDE Setup
 
-## 如何使用本指南
-本指南通过 Markdown 文件组织。您可以直接浏览各个章节，或者使用上方的目录快速跳转到您感兴趣的部分。我们鼓励您使用搜索功能（如果平台支持）来查找特定信息。
+[VSCode](https://code.visualstudio.com/) + [Volar](https://marketplace.visualstudio.com/items?itemName=Vue.volar) (and disable Vetur).
 
-## 指南内容
-本指南计划涵盖以下方面，欢迎大家补充和完善：
+## Type Support for `.vue` Imports in TS
 
-### 行前准备
-- 签证申请
-- 行李打包
-- 住宿预订
-- 费用预算
+TypeScript cannot handle type information for `.vue` imports by default, so we replace the `tsc` CLI with `vue-tsc` for type checking. In editors, we need [Volar](https://marketplace.visualstudio.com/items?itemName=Vue.volar) to make the TypeScript language service aware of `.vue` types.
 
-### 校园生活
-- 校园设施介绍（图书馆、食堂、宿舍、运动场所等）
-- 学生组织与社团
-- 校园活动
-- 安全须知
+## Customize configuration
 
-### 学业指南
-- 选课系统介绍
-- 各学院专业信息
-- 学习资源
-- 考试与评估
+See [Vite Configuration Reference](https://vite.dev/config/).
 
-### 校外探索
-- 周边交通
-- 餐饮推荐
-- 购物指南
-- 旅游景点
+## Project Setup
 
-### 实用信息
-- 银行开户
-- 电话卡办理
-- 医疗服务
-- 常用APP推荐
+```sh
+npm install
+```
 
-## 如何贡献
-我们非常欢迎您为本指南贡献内容！您可以通过以下方式参与：
-1.  **Fork 本仓库**：将本仓库 Fork到您自己的 GitHub 账户。
-2.  **创建分支**：从 `main` 分支创建一个新的特性分支（例如 `feature/add-canteen-info`）。
-3.  **修改内容**：在您的分支上进行修改和补充。
-4.  **提交更改**：提交您的更改，并撰写清晰的提交信息。
-5.  **发起 Pull Request**：将您的分支推送到您的 Fork仓库，并向本仓库的 `main` 分支发起 Pull Request。
+### Compile and Hot-Reload for Development
 
-请确保您的贡献内容准确、客观、实用。
+```sh
+npm run dev
+```
 
+### Type-Check, Compile and Minify for Production
 
-## 许可证
-本项目采用 [GNU GENERAL PUBLIC LICENSE Version 3](LICENSE) 许可证。
-
-## 未来计划
-我们计划在不久的将来将本指南的内容迁移到 Wiki 百科的形式，以便更方便地进行协作编辑和信息查阅。敬请期待！
+```sh
+npm run build
+```
