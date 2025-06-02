@@ -1,0 +1,54 @@
+/* src/assets/global.css */
+
+/* 全局重置 */
+* {
+  margin: 0;
+  padding: 0;
+  box-sizing: border-box;
+}
+
+html, body, #app {
+  height: 100%;
+  font-family: 'Helvetica Neue', Arial, 'PingFang SC', 'Microsoft YaHei', sans-serif;
+  background-color: #ffffff;
+  color: #333333;
+}
+
+a {
+  color: #0c64c1;
+  text-decoration: none;
+}
+a:hover {
+  text-decoration: underline;
+}
+
+h1, h2, h3, h4, h5 {
+  font-weight: 600;
+}
+
+/* 让页面整体对齐中间 */
+.doc-content,
+.home-content {
+  margin-left: 240px; /* 留出侧边栏宽度 */
+  max-width: 800px;
+}
+
+/* 针对 survivexjtu.github.io 常见的 blockquote、code、table 等进行风格调整 */
+blockquote {
+  border-left: 4px solid #ddd;
+  padding-left: 16px;
+  color: #666;
+}
+table {
+  border-collapse: collapse;
+  width: 100%;
+  margin: 1em 0;
+}
+table th,
+table td {
+  border: 1px solid #ddd;
+  padding: 8px;
+}
+table th {
+  background-color: #f6f8fa;
+}
