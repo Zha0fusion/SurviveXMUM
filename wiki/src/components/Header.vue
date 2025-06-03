@@ -19,7 +19,7 @@
       <router-link to="/forums">论坛</router-link>
       <a href="https://github.com/yourusername" target="_blank" rel="noopener noreferrer">GitHub</a>
       
-      <a href="https://your-site.com" target="_blank" rel="noopener noreferrer">
+      <a href="/login" target="_blank" rel="noopener noreferrer">
           <el-avatar> user </el-avatar>
       </a>
     </nav>
