@@ -136,3 +136,6 @@
 
 ## 未来计划
 我们计划在不久的将来将本指南的内容迁移到 Wiki 百科的形式，以便更方便地进行协作编辑和信息查阅。敬请期待！
+## Star History
+
+[![Star History Chart](https://api.star-history.com/svg?repos=503133214/SurviveXMUM&type=Date)](https://www.star-history.com/#503133214/SurviveXMUM&Date)
