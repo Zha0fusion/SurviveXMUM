@@ -6,8 +6,8 @@
       <div class="hero-overlay"></div>
       <div class="hero-content">
         <h1 class="hero-title">SurviveXMUM</h1>
-        <h2 class="hero-subtitle">更适合厦大学子的生存指南</h2>
-        <p class="hero-welcome">Welcome to XMUM. 学习部出品。</p>
+        <h2 class="hero-subtitle">更适合厦大马校学子的生存指南</h2>
+        <p class="hero-welcome">Welcome to XMUM.</p>
         <div class="hero-cta-buttons">
           <button
             v-for="(button, idx) in ctaButtons"
@@ -24,7 +24,7 @@
         <div class="logo-graphic">
           <span class="logo-text-main">Survive</span>
           <span class="logo-text-main">XMUM</span>
-          <span class="logo-text-p">P</span>
+          <span class="logo-text-p"></span>
         </div>
       </div>
     </section>
