@@ -1,12 +1,15 @@
 <!-- src/components/MarkdownRenderer.vue -->
 <template>
-  <div class="markdown-body" v-html="renderedHtml"></div>
+  <el-card class="markdown-card-container" :body-style="{ padding: '0px' }">
+    <div class="markdown-body" v-html="renderedHtml"></div>
+  </el-card>
 </template>
 
 <script>
 import MarkdownIt from "markdown-it";
 // import DOMPurify from 'dompurify'; // 可选：用于XSS防护
 import 'github-markdown-css'; // 导入 GitHub Markdown 样式
+
 
 export default {
   name: "MarkdownRenderer",
@@ -87,18 +90,38 @@ export default {
 </script>
 
 <style>
-/* 使用 github-markdown-css 提供的样式，添加一些自定义调整 */
-.markdown-body {
+.markdown-card-container {
+  /* 这些样式原先在 .markdown-body 上, 现在应用于 el-card 容器 */
   box-sizing: border-box;
   min-width: 200px;
   max-width: 980px;
-  margin: 0 auto;
-  padding: 15px;
+  margin: 20px auto; /* 为卡片添加一些垂直边距，使其在页面上更好看 */
 }
 
-@media (max-width: 767px) {
+/* el-card 内部的 .markdown-body 样式 */
+.markdown-body {
+  /* github-markdown-css 的样式会应用在这里。我们覆盖内边距。*/
+  /* 原始组件的内边距是 15px。*/
+  /* 由于 el-card 的 body-style 设置了 padding: '0px', 这里的 padding 会生效。*/
+  padding: 15px; /* 与原始组件自定义样式保持一致 */
+  box-sizing: border-box; /* 保持box-sizing，github-markdown-css可能也依赖它 */
+  /* min-width, max-width, margin:auto 已移至 markdown-card-container */
+}
+
+/* 
+  如果希望内边距也具有响应性 (例如桌面端更宽，移动端更窄),
+  可以取消注释并调整下面的媒体查询:
+*/
+/*
+@media (min-width: 768px) {
   .markdown-body {
-    padding: 15px;
+    padding: 25px; // 大屏幕使用较大的内边距
   }
 }
+@media (max-width: 767px) {
+  .markdown-body {
+    padding: 15px; // 小屏幕使用较小的内边距 (如果基础padding不是15px)
+  }
+}
+*/
 </style>
