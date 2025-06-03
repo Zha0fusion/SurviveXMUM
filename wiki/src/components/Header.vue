@@ -2,7 +2,14 @@
 <template>
   <header class="site-header">
     <div class="logo" @click="goHome" role="button" tabindex="0" aria-label="返回首页">XMUM Wiki</div>
-
+    <!--搜索栏-->
+    <div style="flex: 1;padding: 0 20px;margin-top: 10px;text-align: center;">
+      <el-input placeholder="搜索相关内容..." style="width: 100%;max-width: 300px; height:30px;border-radius:15px">
+        <template #prefix>
+          <el-icon><Search/></el-icon>
+        </template>
+      </el-input>
+    </div>
     <!-- 桌面端导航 -->
     <nav v-if="!isMobileView" class="desktop-nav">
       <router-link to="/">
@@ -12,7 +19,7 @@
       <router-link to="/forums">论坛</router-link>
       <a href="https://github.com/yourusername" target="_blank" rel="noopener noreferrer">GitHub</a>
       
-      <a href="https://your-site.com" target="_blank" rel="noopener noreferrer">
+      <a href="/login" target="_blank" rel="noopener noreferrer">
           <el-avatar> user </el-avatar>
       </a>
     </nav>
@@ -37,13 +44,13 @@
 </template>
 
 <script>
-import { Menu } from '@element-plus/icons-vue';
-
+import { Menu,Search } from '@element-plus/icons-vue';
 const MOBILE_BREAKPOINT = 767; // 根据需要调整断点
 
 export default {
   name: "SiteHeader", // Renamed from "Header" to be more specific if "Header" is too generic
   components: {
+     Search,
     // ElDropdown, ElDropdownMenu, ElDropdownItem, ElButton are globally registered
   },
   data() {

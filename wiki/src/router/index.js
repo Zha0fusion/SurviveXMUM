@@ -20,6 +20,11 @@ const routes = [
     // component: NotFoundPage, // 修改为懒加载
     component: () => import(/* webpackChunkName: "notfound" */ "@/views/NotFound.vue"),
   },
+  {
+    path: "/login",
+    name: "Login",
+    component: () => import(/* webpackChunkName: "login" */ "@/views/LoginPage.vue"),
+  },
 ];
 
 const router = createRouter({
