@@ -56,10 +56,8 @@
 import axios from "axios";
 import MarkdownRenderer from "@/components/MarkdownRenderer.vue";
 import Sidebar from "@/components/WikiSidebar.vue";
-import { Menu } from '@element-plus/icons-vue'; // 导入图标
-
+import { Menu } from '@element-plus/icons-vue';
 // Element Plus 组件 ElContainer, ElAside, ElMain, ElSkeleton, ElEmpty, ElDrawer, ElButton 已全局注册
-
 const DOCS_BASE_PATH = "/docs/";
 const MOBILE_BREAKPOINT = 767; // px
 
