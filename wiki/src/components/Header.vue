@@ -17,7 +17,7 @@
       </router-link>
       <router-link to="/docs/README">Docs</router-link>
       <router-link to="/forums">论坛</router-link>
-      <a href="https://github.com/yourusername" target="_blank" rel="noopener noreferrer">GitHub</a>
+      <a href="https://github.com/503133214/SurviveXMUM" target="_blank" rel="noopener noreferrer">GitHub</a>
       
       <a href="/login" target="_blank" rel="noopener noreferrer">
           <el-avatar> user </el-avatar>
@@ -75,7 +75,7 @@ export default {
     },
     handleMobileNavCommand(command) {
       if (command === 'github') {
-        window.open('https://github.com/yourusername', '_blank', 'noopener,noreferrer');
+        window.open('https://github.com/503133214/SurviveXMUM', '_blank', 'noopener,noreferrer');
       } else if (command === 'website') {
         window.open('https://your-site.com', '_blank', 'noopener,noreferrer');
       } else if (command) {
