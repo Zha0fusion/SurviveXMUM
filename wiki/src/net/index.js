@@ -34,6 +34,7 @@ function takeAccessToken(){
         ElMessage.warning("登录已过期，请重新登录")
         return null
     }
+    return authObj.token; // 返回有效的token
 }
 function deleteAccessToken(){
     localStorage.removeItem(authItemName)
@@ -83,14 +84,22 @@ function login(username,code,success,failure=defaultFailure){
         success(data)
     },failure)
 }
-function logout(success,failure=defaultFailure){
-    get("/login/logout",()=>{
-        deleteAccessToken()
-        ElMessage.success("退出登录成功")
-        success()
-    },(message,code,url)=>{
-        console.error(`退出登录失败: ${message}`)
-        failure(message,code,url)
-    })
+function logout(success, failure = defaultFailure, error = defaultError) {
+    // 检查token是否存在且有效
+    if (!takeAccessToken()) {
+        failure('未找到登录令牌或令牌已过期', -1, '/login/logout');
+        return;
+    }
+    internalPost(
+        '/login/logout',
+        {},
+        accessHeader(),
+        (responseData) => {
+            deleteAccessToken(); // 登出成功后删除token
+            success(responseData);
+        },
+        failure,
+        error
+    );
 }
-export {get,unauthorized,post,accessHeader,login,logout}
+export {get,unauthorized,post,accessHeader,login,logout,takeAccessToken}

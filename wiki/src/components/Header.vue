@@ -18,10 +18,24 @@
       <router-link to="/docs/README">Docs</router-link>
       <router-link to="/forums">论坛</router-link>
       <a href="https://github.com/yourusername" target="_blank" rel="noopener noreferrer">GitHub</a>
-      
-      <a href="/login" target="_blank" rel="noopener noreferrer">
-          <el-avatar> user </el-avatar>
-      </a>
+              <div>
+          <a href="/login" target="_blank" rel="noopener noreferrer" v-if="!hasToken">
+            <el-button>登录</el-button>
+          </a>
+          <el-dropdown v-if="hasToken">
+            <span class="el-dropdown-link">
+              <el-avatar>user</el-avatar>
+            </span>
+            <template #dropdown>
+              <el-dropdown-menu>
+                <el-dropdown-item>个人信息设置</el-dropdown-item>
+                <el-dropdown-item>消息列表</el-dropdown-item>
+                <el-dropdown-item divided @click="UserLogout">退出登录</el-dropdown-item>
+              </el-dropdown-menu>
+            </template>
+          </el-dropdown>
+        </div>
+
     </nav>
 
     <!-- 移动端导航 -->
@@ -44,12 +58,14 @@
 </template>
 
 <script>
-import { Menu,Search } from '@element-plus/icons-vue';
+import {Menu, Search, User} from '@element-plus/icons-vue';
+import {logout, takeAccessToken} from "@/net/index.js";
+import router from "@/router/index.js";
 const MOBILE_BREAKPOINT = 767; // 根据需要调整断点
-
 export default {
   name: "SiteHeader", // Renamed from "Header" to be more specific if "Header" is too generic
   components: {
+    User,
      Search,
     // ElDropdown, ElDropdownMenu, ElDropdownItem, ElButton are globally registered
   },
@@ -58,11 +74,28 @@ export default {
       isMobileView: false,
       MenuIcon: Menu,
       resizeTimeout: null,
+      tokenCheckCounter: 0, // 用于强制刷新computed
     };
   },
+  computed: {
+    hasToken() {
+      // 使用tokenCheckCounter来强制刷新这个computed属性
+      this.tokenCheckCounter;
+      const token = takeAccessToken();
+      // 更严格的判断：不仅要存在，还要有内容
+      const hasValidToken = token && token.trim && token.trim().length > 0;
+      return hasValidToken;
+    }
+  },
   methods: {
+    refreshTokenStatus() {
+      this.tokenCheckCounter++;
+    },
     goHome() {
       this.$router.push("/");
+    },
+    UserLogout(){
+      logout(()=>router.push('/'))
     },
     checkMobileView() {
       this.isMobileView = window.innerWidth <= MOBILE_BREAKPOINT;
@@ -86,10 +119,20 @@ export default {
   mounted() {
     this.checkMobileView();
     window.addEventListener('resize', this.handleResize);
+    // 定期检查token状态（每30秒检查一次）
+    this.tokenCheckInterval = setInterval(() => {
+      this.refreshTokenStatus();
+    }, 30000);
+    // 监听storage变化
+    window.addEventListener('storage', this.refreshTokenStatus);
   },
   beforeUnmount() {
     window.removeEventListener('resize', this.handleResize);
+    window.removeEventListener('storage', this.refreshTokenStatus);
     clearTimeout(this.resizeTimeout);
+    if (this.tokenCheckInterval) {
+      clearInterval(this.tokenCheckInterval);
+    }
   },
 };
 </script>
@@ -116,8 +159,13 @@ export default {
   user-select: none; /* 防止文本选中 */
 }
 
+.desktop-nav {
+  display: flex;
+  align-items: center;
+  gap: 20px; /* 使用gap替代margin-left，更简洁 */
+}
+
 .desktop-nav a {
-  margin-left: 20px; /* 调整链接间距 */
   color: #333; /* 略微加深颜色以提高对比度 */
   text-decoration: none;
   font-weight: 500;
@@ -135,10 +183,14 @@ export default {
   color: #333; /* 确保图标颜色可见 */
 }
 
-/* 如果需要，可以为 el-dropdown-menu 添加自定义样式 */
-/* 例如：
-.el-dropdown-menu__item {
-  font-size: 14px;
+/* 下拉框样式 */
+.el-dropdown-link {
+  cursor: pointer;
+  display: flex;
+  align-items: center;
 }
-*/
+
+.el-dropdown-link:hover .el-avatar {
+  opacity: 0.8;
+}
 </style>
