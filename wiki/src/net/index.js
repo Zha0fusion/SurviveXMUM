@@ -60,7 +60,7 @@ function internalGet(url,headers,success,failure,error=defaultError){
 function accessHeader(){
     const token = takeAccessToken()
     return token ?{
-        'Authorization': `Bearer ${takeAccessToken()}`
+        'Authorization': `Bearer ${token}`
     }:{}
 }
 function get(url,success,failure=defaultFailure){

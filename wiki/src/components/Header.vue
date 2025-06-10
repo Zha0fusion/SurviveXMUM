@@ -60,7 +60,6 @@
 <script>
 import {Menu, Search, User} from '@element-plus/icons-vue';
 import {logout, takeAccessToken} from "@/net/index.js";
-import router from "@/router/index.js";
 const MOBILE_BREAKPOINT = 767; // 根据需要调整断点
 export default {
   name: "SiteHeader", // Renamed from "Header" to be more specific if "Header" is too generic
@@ -95,7 +94,11 @@ export default {
       this.$router.push("/");
     },
     UserLogout(){
-      logout(()=>router.push('/'))
+      logout(() => {
+        // 退出登录成功后强制刷新页面
+        this.refreshTokenStatus(); // 先刷新token状态
+        window.location.href = '/';
+      });
     },
     checkMobileView() {
       this.isMobileView = window.innerWidth <= MOBILE_BREAKPOINT;
