@@ -1,12 +1,46 @@
 <!-- src/components/MarkdownRenderer.vue -->
 <template>
-  <div class="markdown-container">
-    <el-card class="markdown-card-container" :body-style="{ padding: '0px' }">
+  <div class="markdown-container" :class="{ 'body-freeze-for-drawer': isTocDrawerOpen && isMobileView }">
+    <!-- Toggle Button for Mobile Drawer -->
+    <button
+        class="toc-drawer-toggle"
+        @click="toggleTocDrawer"
+        v-if="showTocToggle && tocItems.length > 0"
+        aria-label="Toggle Table of Contents"
+        :aria-expanded="isTocDrawerOpen.toString()"
+    >
+      ☰
+    </button>
+
+    <div class="main-content-area">
       <div class="markdown-body" v-html="renderedHtml"></div>
-    </el-card>
-    <el-card class="menu">
-      <div class="toc-container" v-if="tocItems.length > 0">
-        <div class="toc-title">目录</div>
+    </div>
+
+    <!-- Overlay for Mobile Drawer -->
+    <div
+        class="toc-overlay"
+        v-if="isTocDrawerOpen && isMobileView"
+        @click="closeTocDrawer"
+    ></div>
+
+    <!-- Table of Contents Sidebar / Drawer -->
+    <aside
+        class="toc-sidebar-area"
+        :class="{ 'is-drawer-open': isTocDrawerOpen && isMobileView }"
+        v-if="tocItems.length > 0"
+        role="navigation"
+        aria-labelledby="toc-title-id"
+    >
+      <div class="toc-container">
+        <button
+            class="toc-drawer-close-btn"
+            @click="closeTocDrawer"
+            v-if="isMobileView"
+            aria-label="Close Table of Contents"
+        >
+          &times;
+        </button>
+        <div class="toc-title" id="toc-title-id">目录</div>
         <div class="toc-content">
           <ul class="toc-list">
             <li
@@ -15,21 +49,20 @@
                 :class="`toc-level-${item.level}`"
                 class="toc-item"
             >
-              <a :href="'#' + item.id" @click="scrollToHeading(item.id, $event)">
+              <a :href="'#' + item.id" @click="handleTocLinkClick(item.id, $event)">
                 {{ item.text }}
               </a>
             </li>
           </ul>
         </div>
       </div>
-    </el-card>
+    </aside>
   </div>
 </template>
 
 <script>
 import MarkdownIt from "markdown-it";
-// import DOMPurify from 'dompurify'; // 可选：用于XSS防护
-import 'github-markdown-css'; // 导入 GitHub Markdown 样式
+import 'github-markdown-css';
 
 export default {
   name: "MarkdownRenderer",
@@ -41,7 +74,10 @@ export default {
   },
   data() {
     return {
-      tocItems: []
+      tocItems: [],
+      isTocDrawerOpen: false,
+      isMobileView: false,
+      showTocToggle: false,
     };
   },
   computed: {
@@ -49,262 +85,345 @@ export default {
       if (!this.content) {
         return "";
       }
-
-      // 重置 TOC
       this.tocItems = [];
-
-      // 定义一个slugify函数，用于生成锚点ID
-      const slugify = (s) => {
-        return String(s)
-          .trim()
-          .toLowerCase()
-          .replace(/\s+/g, '-')
-          .replace(/[^\w\u4e00-\u9fa5\-]/g, '') // 保留中文字符
-          .replace(/\-\-+/g, '-') // 合并多个连字符
-          .replace(/^-+|-+$/g, ''); // 去除首尾连字符
-      };
-
-      const md = new MarkdownIt({
-        html: true, // 允许 HTML 标签
-        linkify: true, // 自动转换 URL 文本为链接
-        typographer: true, // 启用一些标点符号和引号的智能转换
-      });
-
-      // 自定义标题渲染规则，用于生成 TOC
-      const originalHeadingOpen = md.renderer.rules.heading_open || function (tokens, idx, options, env, self) {
-        return self.renderToken(tokens, idx, options);
-      };
-
+      const slugify = (s) => String(s).trim().toLowerCase().replace(/\s+/g, '-').replace(/[^\w\u4e00-\u9fa5\-]/g, '').replace(/\-\-+/g, '-').replace(/^-+|-+$/g, '');
+      const md = new MarkdownIt({ html: true, linkify: true, typographer: true });
+      const originalHeadingOpen = md.renderer.rules.heading_open || function (tokens, idx, options, env, self) { return self.renderToken(tokens, idx, options); };
       md.renderer.rules.heading_open = (tokens, idx, options, env, self) => {
         const token = tokens[idx];
-        const level = parseInt(token.tag.substring(1)); // h1 -> 1, h2 -> 2, etc.
-        
-        // 获取标题文本
+        const level = parseInt(token.tag.substring(1));
         const contentToken = tokens[idx + 1];
         if (contentToken && contentToken.type === 'inline') {
           const text = contentToken.content;
           const id = slugify(text);
-          
-          // 添加到 TOC
-          this.tocItems.push({
-            level,
-            text,
-            id,
-          });
-          // 为标题添加 id 属性
+          this.tocItems.push({ level, text, id });
           token.attrSet('id', id);
         }
-
         return originalHeadingOpen(tokens, idx, options, env, self);
       };
-
-      // 保存原始的 link_open 规则
-      const defaultRender =
-        md.renderer.rules.link_open ||
-        function (tokens, idx, options, env, self) {
-          return self.renderToken(tokens, idx, options);
-        };
-
+      const defaultRender = md.renderer.rules.link_open || function (tokens, idx, options, env, self) { return self.renderToken(tokens, idx, options); };
       md.renderer.rules.link_open = function (tokens, idx, options, env, self) {
         const token = tokens[idx];
         const hrefIndex = token.attrIndex("href");
         if (hrefIndex >= 0) {
           const hrefAttr = token.attrs[hrefIndex];
           let originalHref = hrefAttr[1];
-          let processedHref = originalHref;
-
-          // 检查是否是内部文档链接 (相对路径且以 .md 结尾)
-          // 避免处理外部链接 (http://, https://) 或已经是 /docs/ 开头的链接
-          if (
-            originalHref &&
-            !originalHref.startsWith("http") &&
-            !originalHref.startsWith("/") && // 避免处理绝对路径，除非我们想强制它们
-            originalHref.endsWith(".md")
-          ) {
-            processedHref = `/docs/${originalHref.substring(
-              0,
-              originalHref.length - 3
-            )}`;
-            hrefAttr[1] = processedHref;
-          } else if (
-            originalHref &&
-            originalHref.startsWith("./") &&
-            originalHref.endsWith(".md")
-          ) {
-            // 处理 ./some-file.md 类型的链接
-            processedHref = `/docs/${originalHref.substring(
-              2, //移除 './'
-              originalHref.length - 3 // 移除 '.md'
-            )}`;
-            hrefAttr[1] = processedHref;
+          if (originalHref && !originalHref.startsWith("http") && !originalHref.startsWith("/") && originalHref.endsWith(".md")) {
+            hrefAttr[1] = `/docs/${originalHref.substring(0, originalHref.length - 3)}`;
+          } else if (originalHref && originalHref.startsWith("./") && originalHref.endsWith(".md")) {
+            hrefAttr[1] = `/docs/${originalHref.substring(2, originalHref.length - 3)}`;
           }
-          // 如果您还想处理类似 ../other-dir/file.md 的链接，需要更复杂的路径解析
         }
-
-        // 调用原始渲染器
         return defaultRender(tokens, idx, options, env, self);
       };
-
-      let html = md.render(this.content);
-      // 可选: 使用 DOMPurify 清理 HTML 以防止 XSS
-      // if (typeof DOMPurify !== 'undefined') { // 确保 DOMPurify 已加载
-      //   html = DOMPurify.sanitize(html);
-      // }
-      return html;
+      return md.render(this.content);
     },
   },
   methods: {
     scrollToHeading(id, event) {
-      event.preventDefault();
+      if (event) event.preventDefault();
       const element = document.getElementById(id);
       if (element) {
         element.scrollIntoView({
           behavior: 'smooth',
           block: 'start',
         });
-        // 更新 URL hash
         window.history.pushState(null, null, `#${id}`);
       }
     },
+    handleTocLinkClick(id, event) {
+      this.scrollToHeading(id, event);
+      if (this.isMobileView && this.isTocDrawerOpen) {
+        this.closeTocDrawer();
+      }
+    },
+    openTocDrawer() {
+      this.isTocDrawerOpen = true;
+      // Optional: Add class to body to prevent scrolling if needed
+      // document.body.classList.add('no-scroll');
+    },
+    closeTocDrawer() {
+      this.isTocDrawerOpen = false;
+      // Optional: Remove class from body
+      // document.body.classList.remove('no-scroll');
+    },
+    toggleTocDrawer() {
+      if (this.isTocDrawerOpen) {
+        this.closeTocDrawer();
+      } else {
+        this.openTocDrawer();
+      }
+    },
+    checkIfMobileView() {
+      const mobileBreakpoint = 992; // Same as CSS media query
+      this.isMobileView = window.innerWidth <= mobileBreakpoint;
+      this.showTocToggle = this.isMobileView;
+
+      // If resizing from mobile to desktop and drawer was open, ensure it's closed
+      // and styles are appropriate for desktop.
+      if (!this.isMobileView && this.isTocDrawerOpen) {
+        this.closeTocDrawer();
+      }
+    },
+  },
+  mounted() {
+    this.checkIfMobileView();
+    window.addEventListener('resize', this.checkIfMobileView);
+  },
+  beforeUnmount() {
+    window.removeEventListener('resize', this.checkIfMobileView);
+    // Clean up body class if it was added
+    // document.body.classList.remove('no-scroll');
   },
 };
 </script>
 
 <style>
-.menu{
-  align-items: center;
-  margin-top: 20px;
-  max-height: 400px;
-  height: 100%;
+/* 确保导入的 github-markdown-css 样式能够正确应用 */
+/* github-markdown-css 的样式已经通过 import 'github-markdown-css' 引入 */
+
+:root {
+  --header-height: 60px;
 }
+
 .markdown-container {
   display: flex;
   position: relative;
   width: 100%;
   max-width: 1200px;
   margin: 0 auto;
+  gap: 24px;
 }
 
-.markdown-card-container {
-  box-sizing: border-box;
-  min-width: 200px;
-  max-width: 780px; /* 减小宽度，为目录留出空间 */
-  margin: 20px auto; /* 改为auto居中 */
+.main-content-area {
   flex: 1;
+  min-width: 0;
+  max-width: 800px;
+  margin: 20px 0;
+  box-sizing: border-box;
 }
 
-/* el-card 内部的 .markdown-body 样式 */
+/* 修改此处：减少自定义样式，避免与 github-markdown-css 冲突 */
 .markdown-body {
-  padding: 15px; /* 与原始组件自定义样式保持一致 */
-  box-sizing: border-box; /* 保持box-sizing，github-markdown-css可能也依赖它 */
+  /* 保持基本的布局样式 */
+  padding: 25px;
+  box-sizing: border-box;
+  background-color: #fff;
+  border-radius: 6px;
+  box-shadow: 0 1px 3px rgba(0,0,0,0.05), 0 1px 2px rgba(0,0,0,0.1);
+  
+  /* 确保文本颜色可见 */
+  color: #24292f;
+  
+  /* 确保字体设置 */
+  font-family: -apple-system,BlinkMacSystemFont,"Segoe UI","Noto Sans",Helvetica,Arial,sans-serif,"Apple Color Emoji","Segoe UI Emoji";
+  font-size: 16px;
+  line-height: 1.5;
+  word-wrap: break-word;
 }
 
-/* 目录容器样式 */
+/* Desktop TOC styles */
+.toc-sidebar-area {
+  width: 250px;
+  margin-top: 20px;
+  box-sizing: border-box;
+}
+
 .toc-container {
-  width: 200px;
-  position: sticky;
+  width: 100%;
+  position: sticky; /* Sticky on desktop */
   top: 20px;
   max-height: calc(100vh - 40px);
   overflow-y: auto;
-  margin: 20px 0 20px 20px;
-  padding: 15px;
-  border-left: 1px solid #eaecef;
+  padding: 20px 15px;
   font-size: 14px;
-  background-color: #fafafa;
+  box-sizing: border-box;
+  background-color: #fff;
+  border-radius: 6px;
+  box-shadow: 0 1px 3px rgba(0,0,0,0.05), 0 1px 2px rgba(0,0,0,0.1);
 }
 
 .toc-title {
-  font-weight: bold;
-  margin-bottom: 10px;
-  font-size: 16px;
-  color: #333;
-  text-align: center; /* 标题居中 */
-}
-
-.toc-content {
-  text-align: center; /* 内容容器居中 */
+  font-weight: 600;
+  margin-bottom: 15px;
+  font-size: 17px;
+  color: #2c3e50;
+  text-align: left;
+  padding-left: 5px;
 }
 
 .toc-list {
   list-style-type: none;
   padding: 0;
   margin: 0;
-  display: inline-block; /* 让列表变为行内块元素，配合父容器的text-align: center实现居中 */
-  text-align: left; /* 恢复文本左对齐，但整个列表会居中 */
-  width: 100%; /* 保证宽度 */
-}
-
-.toc-item {
-  margin-bottom: 5px;
-  text-align: center; /* 每个项目居中 */
+  text-align: left;
+  width: 100%;
 }
 
 .toc-item a {
-  display: inline-block; /* 改为行内块元素，配合父元素的text-align实现居中 */
-  padding: 4px 12px;
-  color: #666;
+  display: block;
+  padding: 8px 10px;
+  color: #555;
   text-decoration: none;
   border-radius: 4px;
-  font-size: 14px;
-  line-height: 1.4;
-  transition: all 0.2s ease;
-  width: auto; /* 自动宽度 */
-  max-width: 90%; /* 限制最大宽度，防止过长 */
-  text-align: center; /* 文本居中 */
+  font-size: 13.5px;
+  line-height: 1.5;
+  transition: background-color 0.2s ease, color 0.2s ease, border-left-color 0.2s ease;
+  width: 100%;
+  box-sizing: border-box;
+  text-align: left;
+  border-left: 3px solid transparent;
 }
 
 .toc-item a:hover {
-  background-color: #e8f4fd;
-  color: #0c64c1;
+  background-color: #f0f4f8;
+  color: #2980b9;
+  border-left-color: #2980b9;
 }
 
-/* 不同级别的标题样式 - 移除padding-left，改用不同的字体大小和颜色来区分层级 */
-.toc-level-1 a {
-  font-weight: 600;
-  font-size: 14px;
+.toc-level-1 a { font-weight: 500; color: #34495e; }
+.toc-level-2 a { padding-left: 25px; }
+.toc-level-3 a { padding-left: 40px; font-size: 13px; }
+.toc-level-4 a { padding-left: 55px; font-size: 12.5px; color: #7f8c8d; }
+.toc-level-5 a, .toc-level-6 a { padding-left: 70px; font-size: 12px; color: #95a5a6; }
+
+
+/* --- Drawer Specific Styles --- */
+.toc-drawer-toggle {
+  display: none; /* Hidden by default, shown via media query */
+  position: fixed;
+  /* top: 15px; */ /* 将在媒体查询中覆盖 */
+  right: 15px;
+  z-index: 1005;
+  background-color: #2c3e50;
+  color: white;
+  border: none;
+  padding: 10px 15px;
+  border-radius: 50%;
+  cursor: pointer;
+  font-size: 20px;
+  line-height: 1;
+  box-shadow: 0 2px 5px rgba(0,0,0,0.2);
+}
+.toc-drawer-toggle:hover {
+  background-color: #34495e;
+}
+
+.toc-overlay {
+  display: none;
+  position: fixed;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  background-color: rgba(0, 0, 0, 0.6);
+  z-index: 999;
+}
+
+.toc-drawer-close-btn {
+  display: none;
+  position: absolute;
+  top: 10px;
+  right: 15px;
+  background: none;
+  border: none;
+  font-size: 28px;
+  color: #777;
+  cursor: pointer;
+  padding: 5px;
+  line-height: 1;
+  z-index: 10;
+}
+.toc-drawer-close-btn:hover {
   color: #333;
 }
 
-.toc-level-2 a {
-  font-size: 13px;
-  color: #555;
+.body-freeze-for-drawer {
+  /* overflow: hidden; */
 }
 
-.toc-level-3 a {
-  font-size: 12px;
-  color: #666;
-}
 
-.toc-level-4 a {
-  font-size: 11px;
-  color: #777;
-}
+/* --- Responsive Design for Drawer (Mobile) --- */
+@media (max-width: 992px) {
+  .toc-drawer-toggle {
+    display: block;
+    top: calc(var(--header-height) + 15px); /* 定位到页头下方，并增加15px间距 */
+    /* right: 15px; */ /* 已在全局样式中设置 */
+  }
 
-.toc-level-5 a,
-.toc-level-6 a {
-  font-size: 10px;
-  color: #888;
-}
+  .main-content-area {
+    margin: 20px 15px;
+    order: 0;
+  }
 
-/* 响应式设计 */
-@media (max-width: 768px) {
   .markdown-container {
     flex-direction: column;
+    gap: 0;
   }
-  
-  .markdown-card-container {
-    max-width: 100%;
-    margin: 20px auto;
+
+  .toc-sidebar-area {
+    position: fixed;
+    top: var(--header-height); /* 抽屉从页头下方开始 */
+    right: 0;
+    width: 280px;
+    height: calc(100vh - var(--header-height)); /* 抽屉高度为视口高度减去页头高度 */
+    background-color: #ffffff;
+    box-shadow: -3px 0 10px rgba(0,0,0,0.1);
+    transform: translateX(100%);
+    transition: transform 0.3s ease-in-out;
+    z-index: 1000;
+    margin-top: 0;
+    display: flex;
+    flex-direction: column;
   }
-  
+
+  .toc-sidebar-area.is-drawer-open {
+    transform: translateX(0);
+  }
+
   .toc-container {
-    width: 100%;
-    margin: 0 0 20px 0;
-    position: relative;
-    top: 0;
-    border-left: none;
-    border-bottom: 1px solid #eaecef;
-    padding-bottom: 15px;
+    position: static;
+    max-height: none;
+    overflow-y: auto;
+    box-shadow: none;
+    border-radius: 0;
+    flex-grow: 1;
+    padding-top: 50px; /* 为关闭按钮留出空间 */
+    padding-bottom: 20px;
+  }
+
+  .toc-title {
+    padding-left: 15px;
+    margin-top: 0;
+  }
+
+  .toc-drawer-close-btn {
+    display: block;
+  }
+}
+
+@media (max-width: 768px) {
+  .main-content-area {
+    margin: 15px 10px;
+  }
+  .markdown-body {
+    padding: 20px;
+  }
+  .toc-sidebar-area {
+    width: 260px;
+    /* top 和 height 已在 992px 断点中通过 var(--header-height) 设置，此处无需重复 */
+  }
+  .toc-drawer-toggle {
+    top: calc(var(--header-height) + 10px); /* 较小屏幕上，与页头间距调整为10px */
+    right: 10px;
+    padding: 8px 12px;
+    font-size: 18px;
+  }
+  .toc-item a {
+    font-size: 13px;
+  }
+  .toc-level-3 a, .toc-level-4 a, .toc-level-5 a, .toc-level-6 a {
+    font-size: 12.5px;
   }
 }
 </style>
