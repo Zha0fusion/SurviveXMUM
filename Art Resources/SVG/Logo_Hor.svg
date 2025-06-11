@@ -1,0 +1,30 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<svg id="_图层_2" data-name="图层 2" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 260.74 68.51">
+  <defs>
+    <style>
+      .cls-1 {
+        font-family: BioRhyme-ExtraBold, BioRhyme;
+        font-size: 14.75px;
+        font-variation-settings: 'wght' 800, 'wdth' 100;
+        font-weight: 700;
+        letter-spacing: .25em;
+      }
+
+      .cls-1, .cls-2 {
+        fill: #00045a;
+      }
+
+      .cls-2 {
+        font-family: CourierNewPSMT, 'Courier New';
+        font-size: 46.75px;
+        letter-spacing: .03em;
+      }
+    </style>
+  </defs>
+  <g id="_说明1" data-name="说明1">
+    <g id="hor">
+      <text class="cls-2" transform="translate(0 36.73) scale(1.25 1)"><tspan x="0" y="0">XMUM</tspan></text>
+      <text class="cls-1" transform="translate(153.77 37.62)"><tspan x="0" y="0">WIKI</tspan></text>
+    </g>
+  </g>
+</svg>
